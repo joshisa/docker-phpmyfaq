@@ -1,10 +1,19 @@
-FROM php:5.6.30-apache
+FROM php:7.1.7-apache
 
-MAINTAINER MERHYLSTUDIO <maghin@merhylstudio.fr>
+MAINTAINER boilerupnc <joshisa@us.ibm.com>
 
 #=== Add phpMyFAQ source code ===
-ADD phpMyFAQ-2.9.6.tar.gz .
+ADD phpmyfaq-2.9.8-with-dbport-support.tar.gz .
 
+#=== Install vim support ===
+RUN set -xe; \
+  \
+  runtimeDeps=' \
+    vim \
+    vim-youcompleteme \
+  ' \
+  && apt-get update && apt-get install -y ${runtimeDeps} && vam install youcompleteme
+ 
 #=== Install gd (php dependencie) ===
 RUN set -xe; \
   \
@@ -44,13 +53,18 @@ RUN set -xe; \
     file \
     zlib1g-dev \
     libxml2-dev \
+    libpq-dev \
     sendmail \
   ' \
   && apt-get update && apt-get install -y ${runtimeDeps} \
   \
-  && docker-php-ext-install mcrypt fileinfo zip soap mysqli json \
+  && docker-php-ext-install mcrypt fileinfo zip soap mysqli pdo pdo_pgsql pgsql json \
   \
   && rm -rf /var/lib/apt/lists/*
+
+#=== Add the www-data to the root group to work with files on volume ===
+RUN usermod -a -G root www-data
+RUN chmod -R g+w ./phpmyfaq
 
 #=== Fix rights ===
 RUN set -xe; \
@@ -83,10 +97,10 @@ RUN { \
 
 #=== Configure php ===
 RUN { \
-    echo 'date.timezone = Europe/Paris'; \
+    echo 'date.timezone = America/New_York'; \
     echo 'register_globals = off'; \
     echo 'safe_mode = off'; \
-    echo 'memory_limit = 64M'; \
+    echo 'memory_limit = 256M'; \
     echo 'file_upload = on'; \
   } | tee "$PHP_INI_DIR/php.ini"
 
@@ -110,10 +124,10 @@ RUN { \
     echo '#!/bin/bash'; \
     echo 'set -e'; \
     echo; \
-    echo 'chown www-data:www-data /var/www/html/phpmyfaq/attachments'; \
-    echo 'chown www-data:www-data /var/www/html/phpmyfaq/data'; \
-    echo 'chown www-data:www-data /var/www/html/phpmyfaq/images'; \
-    echo 'chown www-data:www-data /var/www/html/phpmyfaq/config'; \
+#    echo 'chown www-data:www-data /var/www/html/phpmyfaq/attachments'; \
+#    echo 'chown www-data:www-data /var/www/html/phpmyfaq/data'; \
+#    echo 'chown www-data:www-data /var/www/html/phpmyfaq/images'; \
+#    echo 'chown www-data:www-data /var/www/html/phpmyfaq/config'; \
     echo; \
     echo 'docker-php-entrypoint "$@"'; \
   } | tee "/usr/local/bin/phpmyfaq-entrypoint" \
