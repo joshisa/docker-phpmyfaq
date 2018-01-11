@@ -2,9 +2,6 @@ FROM php:7.1.7-apache
 
 MAINTAINER boilerupnc <joshisa@us.ibm.com>
 
-#=== Add phpMyFAQ source code ===
-ADD phpmyfaq-2.9.8-with-dbport-support.tar.gz .
-
 #=== Install vim support ===
 RUN set -xe; \
   \
@@ -29,7 +26,7 @@ RUN set -xe; \
   \
   && apt-get purge -y ${buildDeps} \
   && rm -rf /var/lib/apt/lists/*
- 
+
 #=== Install ldap (php dependencie) ===
 RUN set -xe; \
   \
@@ -43,7 +40,7 @@ RUN set -xe; \
   \
   && apt-get purge -y ${buildDeps} \
   && rm -rf /var/lib/apt/lists/*
- 
+
 #=== Install other php dependencies ===
 RUN set -xe; \
   \
@@ -64,12 +61,13 @@ RUN set -xe; \
 
 #=== Add the www-data to the root group to work with files on volume ===
 RUN usermod -a -G root www-data
-RUN chmod -R g+w ./phpmyfaq
 
-#=== Fix rights ===
-RUN set -xe; \
+#=== Add phpMyFAQ source code and set permissions ===
+ENV PHPMYFAQ_VERSION=2.9.9
+RUN set -x \
+  && curl -sL http://download.phpmyfaq.de/phpMyFAQ-${PHPMYFAQ_VERSION}.tar.gz | tar xz \
   \
-  folders=' \
+  && folders=' \
     ./phpmyfaq/attachments \
     ./phpmyfaq/data \
     ./phpmyfaq/images \
@@ -111,13 +109,6 @@ RUN set -xe \
   \
   && mv ./phpmyfaq/_.htaccess ./phpmyfaq/.htaccess \
   && sed -ri 's~RewriteBase /phpmyfaq/~RewriteBase /~' ./phpmyfaq/.htaccess
-
-#=== !!! DEBUG !!! phpinfo !!! REMOVE !!! ===
-RUN { \
-    echo '<?php'; \
-    echo 'phpinfo();'; \
-    echo '?>'; \
-  } | tee "./phpmyfaq/info.php"
 
 #=== Entrypoint ===
 RUN { \
