@@ -63,7 +63,7 @@ RUN set -xe; \
 RUN usermod -a -G root www-data
 
 #=== Add phpMyFAQ source code and set permissions ===
-ENV PHPMYFAQ_VERSION=3.0.0-RC
+ENV PHPMYFAQ_VERSION=2.9.13
 RUN set -x \
   && curl -sL http://download.phpmyfaq.de/phpMyFAQ-${PHPMYFAQ_VERSION}.tar.gz | tar xz \
   \
